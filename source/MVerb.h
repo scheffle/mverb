@@ -764,7 +764,7 @@ template<typename T, int OverSampleCount>
         T band;
         T notch;
 
-        T *out;
+        T &out = low;
 
     public:
         StateVariable()
@@ -775,6 +775,10 @@ template<typename T, int OverSampleCount>
             Type(LOWPASS);
             Reset();
         }
+        StateVariable& operator=(const StateVariable& o)
+        {
+			return *this;
+		}
 
         T operator()(T input)
         {
@@ -785,7 +789,7 @@ template<typename T, int OverSampleCount>
                 band += f * high;
                 notch = low + high;
             }
-			return *out;
+			return out;
         }
 
         void Reset()
@@ -815,23 +819,23 @@ template<typename T, int OverSampleCount>
             switch(type)
             {
             case LOWPASS:
-                out = &low;
+                out = low;
                 break;
 
             case HIGHPASS:
-                out = &high;
+                out = high;
                 break;
 
             case BANDPASS:
-                out = &band;
+                out = band;
                 break;
 
             case NOTCH:
-                out = &notch;
+                out = notch;
                 break;
 
             default:
-                out = &low;
+                out = low;
                 break;
             }
         }
