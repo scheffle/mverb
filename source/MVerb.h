@@ -362,14 +362,14 @@ public:
 
     }
 
-	void SetLength (int Length)
+	void SetLength (int inLength)
     {
-       if( Length >= maxLength )
-			Length = maxLength;
-	   if( Length < 0 )
-			Length = 0;
+       if( inLength >= maxLength )
+			inLength = maxLength;
+	   if( inLength < 0 )
+			inLength = 0;
 
-        this->Length = Length;
+        this->Length = inLength;
     }
 
 	void SetFeedback(T feedback)
@@ -459,14 +459,14 @@ public:
 		}
 	}
 
-	void SetLength (int Length)
+	void SetLength (int inLength)
     {
-       if( Length >= maxLength )
-			Length = maxLength;
-	   if( Length < 0 )
-			Length = 0;
+       if( inLength >= maxLength )
+			inLength = maxLength;
+	   if( inLength < 0 )
+			inLength = 0;
 
-        this->Length = Length;
+        this->Length = inLength;
     }
 
 
@@ -514,14 +514,14 @@ public:
 
     }
 
-	void SetLength (int Length)
+	void SetLength (int inLength)
     {
-       if( Length >= maxLength )
-			Length = maxLength;
-	   if( Length < 0 )
-			Length = 0;
+       if( inLength >= maxLength )
+			inLength = maxLength;
+	   if( inLength < 0 )
+			inLength = 0;
 
-        this->Length = Length;
+        this->Length = inLength;
     }
 
     void Clear()
@@ -601,14 +601,14 @@ public:
 	}
 
 
-	void SetLength (int Length)
+	void SetLength (int inLength)
     {
-       if( Length >= maxLength )
-			Length = maxLength;
-	   if( Length < 0 )
-			Length = 0;
+       if( inLength >= maxLength )
+			inLength = maxLength;
+	   if( inLength < 0 )
+			inLength = 0;
 
-        this->Length = Length;
+        this->Length = inLength;
     }
 
 
@@ -714,14 +714,14 @@ public:
 	}
 
 
-	void SetLength (int Length)
+	void SetLength (int inLength)
     {
-       if( Length >= maxLength )
-			Length = maxLength;
-	   if( Length < 0 )
-			Length = 0;
+       if( inLength >= maxLength )
+			inLength = maxLength;
+	   if( inLength < 0 )
+			inLength = 0;
 
-        this->Length = Length;
+        this->Length = inLength;
     }
 
 
@@ -797,15 +797,15 @@ template<typename T, int OverSampleCount>
             low = high = band = notch = 0;
         }
 
-        void SetSampleRate(T sampleRate)
+        void SetSampleRate(T inSampleRate)
         {
-            this->sampleRate = sampleRate * OverSampleCount;
+            this->sampleRate = inSampleRate * OverSampleCount;
             UpdateCoefficient();
         }
 
-        void Frequency(T frequency)
+        void Frequency(T inFrequency)
         {
-            this->frequency = frequency;
+            this->frequency = inFrequency;
             UpdateCoefficient();
         }
 
