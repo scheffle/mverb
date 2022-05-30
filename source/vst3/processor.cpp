@@ -95,49 +95,59 @@ tresult PLUGIN_API Processor::setActive (TBool state)
 template<typename T, Vst::SymbolicSampleSizes SampleSize>
 void Processor::processT (Vst::ProcessData& data)
 {
-	bool doBypass = params.back ().flushChanges () > 0.5;
-	if (doBypass)
-	{
-		if (data.numSamples > 0)
+	auto& mVerb = std::get<std::unique_ptr<T>> (verb);
+
+	stateTransfer.accessTransferObject_rt ([&] (const StateData& data) {
+		for (auto index = 0; index < data.size (); ++index)
 		{
-			for (auto channel = 0; channel < 2; ++channel)
-			{
-				if (Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel] !=
-				    Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel])
-					memcpy (Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel],
-							Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel],
-							data.numSamples * sizeof (float));
-			}
-			data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
+			params[index].setValue (data[index]);
+			mVerb->setParameter (index, data[index]);
 		}
-		auto& mVerb = std::get<std::unique_ptr<T>> (verb);
+	});
+
+	if (data.numSamples == 0)
+	{
 		std::for_each (params.begin (), params.end (), [&] (auto& p) {
 			p.flushChanges ([&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
 		});
 	}
 	else
 	{
-		Vst::ProcessDataSlicer slicer (32);
-		slicer.process<Vst::SymbolicSampleSizes::kSample32> (data, [this] (auto& data) {
-			auto& mVerb = std::get<std::unique_ptr<T>> (verb);
-			std::for_each (params.begin (), params.end (), [&] (auto& p) {
-				p.advance (data.numSamples,
-				           [&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
+		bool doBypass = params.back ().flushChanges () > 0.5;
+		if (doBypass)
+		{
+			if (data.numSamples > 0)
+			{
+				for (auto channel = 0; channel < 2; ++channel)
+				{
+					if (Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel] !=
+						Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel])
+						memcpy (Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel],
+								Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel],
+								data.numSamples * sizeof (float));
+				}
+				data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
+			}
+		}
+		else
+		{
+			Vst::ProcessDataSlicer slicer (8);
+			slicer.process<Vst::SymbolicSampleSizes::kSample32> (data, [&] (auto& data) {
+				std::for_each (params.begin (), params.end (), [&] (auto& p) {
+					p.advance (data.numSamples,
+							   [&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
+				});
+				mVerb->process (Vst::getChannelBuffers<SampleSize> (data.inputs[0]),
+							   Vst::getChannelBuffers<SampleSize> (data.outputs[0]), data.numSamples);
 			});
-			mVerb->process (Vst::getChannelBuffers<SampleSize> (data.inputs[0]),
-			               Vst::getChannelBuffers<SampleSize> (data.outputs[0]), data.numSamples);
-		});
-		// TODO: Support Silence Flags
+			// TODO: Support Silence Flags
+		}
 	}
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API Processor::process (Vst::ProcessData& data)
 {
-	stateTransfer.accessTransferObject_rt ([&] (const StateData& data) {
-		for (auto index = 0; index < data.size (); ++index)
-			params[index].setValue (data[index]);
-	});
 	if (data.inputParameterChanges)
 	{
 		auto numChanges = data.inputParameterChanges->getParameterCount ();
@@ -148,11 +158,7 @@ tresult PLUGIN_API Processor::process (Vst::ProcessData& data)
 		}
 	}
 
-	if (data.numSamples == 0)
-	{
-		std::for_each (params.begin (), params.end (), [] (auto& p) { p.flushChanges (); });
-	}
-	else if (data.symbolicSampleSize == Vst::SymbolicSampleSizes::kSample32)
+	if (data.symbolicSampleSize == Vst::SymbolicSampleSizes::kSample32)
 		processT<FloatMVerb, Vst::SymbolicSampleSizes::kSample32> (data);
 	else
 		processT<DoubleMVerb, Vst::SymbolicSampleSizes::kSample64> (data);
