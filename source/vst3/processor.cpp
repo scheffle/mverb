@@ -108,6 +108,7 @@ void Processor::processT (Vst::ProcessData& data)
 							Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel],
 							data.numSamples * sizeof (float));
 			}
+			data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
 		}
 		auto& mVerb = std::get<std::unique_ptr<T>> (verb);
 		std::for_each (params.begin (), params.end (), [&] (auto& p) {
@@ -126,6 +127,7 @@ void Processor::processT (Vst::ProcessData& data)
 			mVerb->process (Vst::getChannelBuffers<SampleSize> (data.inputs[0]),
 			               Vst::getChannelBuffers<SampleSize> (data.outputs[0]), data.numSamples);
 		});
+		// TODO: Support Silence Flags
 	}
 }
 
