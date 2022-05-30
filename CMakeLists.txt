@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14.0)
 
 set(vst3sdk_SOURCE_DIR CACHE PATH ../vst3sdk/)
 if(NOT vst3sdk_SOURCE_DIR)
-    message(FATAL_ERROR "Path to VST3 SDK is empty!")
+    message(FATAL_ERROR "Path to VST3 SDK is empty! Invoke cmake with -Dvst3sdk_SOURCE_DIR=PATH_TO_VST3_SDK.")
 endif()
 if(NOT IS_DIRECTORY ${vst3sdk_SOURCE_DIR})
     message(FATAL_ERROR "Path to VST3 SDK is not a directory!")
