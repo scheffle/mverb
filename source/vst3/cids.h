@@ -21,10 +21,10 @@
 
 namespace mverb {
 //------------------------------------------------------------------------
-static const Steinberg::FUID kMVerbProcessorUID (0xB2D18CA4, 0x01105C1A, 0xB7F76B14, 0xFEE77D9C);
-static const Steinberg::FUID kMVerbControllerUID (0x91ADCB3E, 0x3D20592D, 0x8D319592, 0xD0383414);
+static DECLARE_UID (kMVerbProcessorUID, 0xB2D18CA4, 0x01105C1A, 0xB7F76B14, 0xFEE77D9C);
+static DECLARE_UID (kMVerbControllerUID, 0x91ADCB3E, 0x3D20592D, 0x8D319592, 0xD0383414);
 
-#define MVerbVST3Category "Fx"
+#define MVerbVST3Category "Fx|Reverb"
 
 //------------------------------------------------------------------------
 } // namespace mverb

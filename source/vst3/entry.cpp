@@ -19,11 +19,12 @@
 #include "cids.h"
 #include "version.h"
 
-#include "public.sdk/source/main/pluginfactory.h"
+#include "public.sdk/source/main/pluginfactory_constexpr.h"
 
 #define stringPluginName "MVerb"
 
 using namespace Steinberg::Vst;
+using namespace Steinberg;
 using namespace mverb;
 
 //------------------------------------------------------------------------
@@ -35,11 +36,11 @@ using namespace mverb;
 
 BEGIN_FACTORY_DEF ("", 
 			       "", 
-			       "mailto:")
+			       "mailto:", 2)
 
 	//---First Plug-in included in this factory-------
 	// its kVstAudioEffectClass component
-	DEF_CLASS2 (INLINE_UID_FROM_FUID(kMVerbProcessorUID),
+	DEF_CLASS  (kMVerbProcessorUID,
 				PClassInfo::kManyInstances,	// cardinality
 				kVstAudioEffectClass,	// the component category (do not changed this)
 				stringPluginName,		// here the Plug-in name (to be changed)
@@ -47,10 +48,11 @@ BEGIN_FACTORY_DEF ("",
 				MVerbVST3Category, 		// Subcategory for this Plug-in (to be changed)
 				FULL_VERSION_STR,		// Plug-in version (to be changed)
 				kVstVersionString,		// the VST 3 SDK version (do not changed this, use always this define)
-				Processor::createInstance)	// function pointer called when this component should be instantiated
-
+				Processor::createInstance,	// function pointer called when this component should be instantiated
+				nullptr)
+				
 	// its kVstComponentControllerClass component
-	DEF_CLASS2 (INLINE_UID_FROM_FUID (kMVerbControllerUID),
+	DEF_CLASS  (kMVerbControllerUID,
 				PClassInfo::kManyInstances, // cardinality
 				kVstComponentControllerClass,// the Controller category (do not changed this)
 				stringPluginName "Controller",	// controller name (could be the same than component name)
@@ -58,8 +60,9 @@ BEGIN_FACTORY_DEF ("",
 				"",						// not used here
 				FULL_VERSION_STR,		// Plug-in version (to be changed)
 				kVstVersionString,		// the VST 3 SDK version (do not changed this, use always this define)
-				Controller::createInstance)// function pointer called when this component should be instantiated
-
+				Controller::createInstance,// function pointer called when this component should be instantiated
+				nullptr)
+				
 	//----for others Plug-ins contained in this factory, put like for the first Plug-in different DEF_CLASS2---
 
 END_FACTORY
