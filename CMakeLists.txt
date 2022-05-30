@@ -16,6 +16,8 @@
 
 cmake_minimum_required(VERSION 3.14.0)
 
+set(CMAKE_OSX_DEPLOYMENT_TARGET CACHE STRING 10.14)
+
 set(vst3sdk_SOURCE_DIR CACHE PATH ../vst3sdk/)
 if(NOT vst3sdk_SOURCE_DIR)
     message(FATAL_ERROR "Path to VST3 SDK is empty! Invoke cmake with -Dvst3sdk_SOURCE_DIR=PATH_TO_VST3_SDK.")
@@ -77,7 +79,6 @@ target_link_libraries(MVerb
 smtg_target_configure_version_file(MVerb)
 
 if(SMTG_MAC)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
     smtg_target_set_bundle(MVerb
         BUNDLE_IDENTIFIER com.martineastwood.MVerb.vst3
         COMPANY_NAME ""
