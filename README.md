@@ -1,5 +1,8 @@
 ﻿#mverb VST3 version
 
+This is a port of the mverb plug-in to VST3. 
+On the contrary to the original this port also supports processing with double precision.
+
 ## How to build
 
 ### You need:
