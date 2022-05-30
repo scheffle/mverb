@@ -16,8 +16,9 @@
 
 #include "controller.h"
 #include "cids.h"
+#include "shared.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
-#include "../MVerb.h"
+#include "public.sdk/source/vst/utility/vst2persistence.h"
 
 using namespace Steinberg;
 
@@ -37,21 +38,19 @@ tresult PLUGIN_API Controller::initialize (FUnknown* context)
 		return result;
 	}
 
-	using Verb = MVerb<float>;
-
-	parameters.addParameter (new Vst::RangeParameter (STR ("Damping"), Verb::DAMPINGFREQ, STR ("%"), 0., 100., 0.))->setPrecision (0);
-	parameters.addParameter (new Vst::RangeParameter (STR ("Density"), Verb::DENSITY, STR ("%"), 0., 100., 50.))->setPrecision (0);
-	parameters.addParameter (new Vst::RangeParameter (STR ("Bandwidth"), Verb::BANDWIDTHFREQ, STR ("%"), 0., 100., 100.))->setPrecision (0);
-	parameters.addParameter (new Vst::RangeParameter (STR ("Predelay"), Verb::PREDELAY, STR ("%"), 0., 100., 0.))->setPrecision (0);
-	parameters.addParameter (new Vst::RangeParameter (STR ("Size"), Verb::SIZE, STR ("%"), 0., 100., 0.))->setPrecision (0);
-	parameters.addParameter (new Vst::RangeParameter (STR ("Decay"), Verb::DECAY, STR ("%"), 0., 100., 50.))->setPrecision (0);
-	parameters.addParameter (new Vst::RangeParameter (STR ("Gain"), Verb::GAIN, STR ("%"), 0., 100., 100.))->setPrecision (0);
-	parameters.addParameter (new Vst::RangeParameter (STR ("Mix"), Verb::MIX, STR ("%"), 0., 100., 15.))->setPrecision (0);
-	parameters.addParameter (new Vst::RangeParameter (STR ("Early/Late Mix"), Verb::EARLYMIX, STR ("%"), 0., 100., 75.))->setPrecision (0);
+	parameters.addParameter (new Vst::RangeParameter (STR ("Damping"), FloatMVerb::DAMPINGFREQ, STR ("%"), 0., 100., 0.))->setPrecision (0);
+	parameters.addParameter (new Vst::RangeParameter (STR ("Density"), FloatMVerb::DENSITY, STR ("%"), 0., 100., 50.))->setPrecision (0);
+	parameters.addParameter (new Vst::RangeParameter (STR ("Bandwidth"), FloatMVerb::BANDWIDTHFREQ, STR ("%"), 0., 100., 100.))->setPrecision (0);
+	parameters.addParameter (new Vst::RangeParameter (STR ("Predelay"), FloatMVerb::PREDELAY, STR ("%"), 0., 100., 0.))->setPrecision (0);
+	parameters.addParameter (new Vst::RangeParameter (STR ("Size"), FloatMVerb::SIZE, STR ("%"), 0., 100., 0.))->setPrecision (0);
+	parameters.addParameter (new Vst::RangeParameter (STR ("Decay"), FloatMVerb::DECAY, STR ("%"), 0., 100., 50.))->setPrecision (0);
+	parameters.addParameter (new Vst::RangeParameter (STR ("Gain"), FloatMVerb::GAIN, STR ("%"), 0., 100., 100.))->setPrecision (0);
+	parameters.addParameter (new Vst::RangeParameter (STR ("Mix"), FloatMVerb::MIX, STR ("%"), 0., 100., 15.))->setPrecision (0);
+	parameters.addParameter (new Vst::RangeParameter (STR ("Early/Late Mix"), FloatMVerb::EARLYMIX, STR ("%"), 0., 100., 75.))->setPrecision (0);
 
 	parameters.addParameter (STR ("Bypass"), nullptr, 1, 0.,
 	                         Vst::ParameterInfo::kCanAutomate | Vst::ParameterInfo::kIsBypass,
-	                         Verb::NUM_PARAMS);
+	                         FloatMVerb::NUM_PARAMS);
 
 	
 	return result;
@@ -69,11 +68,23 @@ tresult PLUGIN_API Controller::terminate ()
 //------------------------------------------------------------------------
 tresult PLUGIN_API Controller::setComponentState (IBStream* state)
 {
-	// Here you get the state of the component (Processor part)
 	if (!state)
-		return kResultFalse;
+		return kInvalidArgument;
 
-	return kResultOk;
+	if (auto stateData = VST3::tryVst2StateLoad (*state, {'emVB'}))
+	{
+		if (stateData->programs.empty ())
+			return kResultFalse;
+		for (auto idx = 0; idx < stateData->programs[0].values.size (); ++idx)
+		{
+			if (auto param = parameters.getParameter (idx))
+			{
+				param->setNormalized (stateData->programs[0].values[idx]);
+			}
+		}
+		return kResultTrue;
+	}
+	return kResultFalse;
 }
 
 //------------------------------------------------------------------------

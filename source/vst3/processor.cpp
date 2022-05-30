@@ -19,6 +19,10 @@
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/utility/processdataslicer.h"
+#include "public.sdk/source/vst/utility/audiobuffers.h"
+#include "public.sdk/source/vst/utility/vst2persistence.h"
+
+#include <algorithm>
 
 using namespace Steinberg;
 
@@ -88,81 +92,83 @@ tresult PLUGIN_API Processor::setActive (TBool state)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Processor::process (Vst::ProcessData& data)
+template<typename T, Vst::SymbolicSampleSizes SampleSize>
+void Processor::processT (Vst::ProcessData& data)
 {
-	auto numChanges = data.inputParameterChanges->getParameterCount ();
-	for (auto index = 0; index < numChanges; ++index)
-	{
-		if (auto queue = data.inputParameterChanges->getParameterData (index))
-			params[queue->getParameterId ()].beginChanges (queue);
-	}
-
 	bool doBypass = params.back ().flushChanges () > 0.5;
 	if (doBypass)
 	{
-		if (data.symbolicSampleSize == Vst::SymbolicSampleSizes::kSample32)
+		if (data.numSamples > 0)
 		{
 			for (auto channel = 0; channel < 2; ++channel)
 			{
-				if (data.inputs[0].channelBuffers32[channel] !=
-				    data.outputs[0].channelBuffers32[channel])
-					memcpy (data.outputs[0].channelBuffers32[channel],
-					        data.inputs[0].channelBuffers32[channel],
-					        data.numSamples * sizeof (float));
+				if (Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel] !=
+				    Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel])
+					memcpy (Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel],
+							Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel],
+							data.numSamples * sizeof (float));
 			}
-			auto& mVerb = std::get<FloatMVerb> (verb);
-			std::for_each (params.begin (), params.end (), [&] (auto& p) {
-				p.flushChanges ([&] (auto value) { mVerb.setParameter (p.getParamID (), value); });
-			});
 		}
-		else if (data.symbolicSampleSize == Vst::SymbolicSampleSizes::kSample64)
-		{
-			for (auto channel = 0; channel < 2; ++channel)
-			{
-				if (data.inputs[0].channelBuffers64[channel] !=
-				    data.outputs[0].channelBuffers64[channel])
-					memcpy (data.outputs[0].channelBuffers64[channel],
-					        data.inputs[0].channelBuffers64[channel],
-					        data.numSamples * sizeof (float));
-			}
-			auto& mVerb = std::get<DoubleMVerb> (verb);
-			std::for_each (params.begin (), params.end (), [&] (auto& p) {
-				p.flushChanges ([&] (auto value) { mVerb.setParameter (p.getParamID (), value); });
-			});
-		}
+		auto& mVerb = std::get<std::unique_ptr<T>> (verb);
+		std::for_each (params.begin (), params.end (), [&] (auto& p) {
+			p.flushChanges ([&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
+		});
 	}
 	else
 	{
 		Vst::ProcessDataSlicer slicer (32);
-		if (data.symbolicSampleSize == Vst::SymbolicSampleSizes::kSample32)
-		{
-			slicer.process<Vst::SymbolicSampleSizes::kSample32> (data, [this] (auto& data) {
-				auto& mVerb = std::get<FloatMVerb> (verb);
-				std::for_each (params.begin (), params.end (), [&] (auto& p) {
-					p.advance (data.numSamples,
-					           [&] (auto value) { mVerb.setParameter (p.getParamID (), value); });
-				});
-				mVerb.process (data.inputs[0].channelBuffers32, data.outputs[0].channelBuffers32,
-				               data.numSamples);
+		slicer.process<Vst::SymbolicSampleSizes::kSample32> (data, [this] (auto& data) {
+			auto& mVerb = std::get<std::unique_ptr<T>> (verb);
+			std::for_each (params.begin (), params.end (), [&] (auto& p) {
+				p.advance (data.numSamples,
+				           [&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
 			});
-		}
-		else if (data.symbolicSampleSize == Vst::SymbolicSampleSizes::kSample64)
+			mVerb->process (Vst::getChannelBuffers<SampleSize> (data.inputs[0]),
+			               Vst::getChannelBuffers<SampleSize> (data.outputs[0]), data.numSamples);
+		});
+	}
+}
+
+//------------------------------------------------------------------------
+tresult PLUGIN_API Processor::process (Vst::ProcessData& data)
+{
+	stateTransfer.accessTransferObject_rt ([&] (const StateData& data) {
+		for (auto index = 0; index < data.size (); ++index)
+			params[index].setValue (data[index]);
+	});
+	if (data.inputParameterChanges)
+	{
+		auto numChanges = data.inputParameterChanges->getParameterCount ();
+		for (auto index = 0; index < numChanges; ++index)
 		{
-			slicer.process<Vst::SymbolicSampleSizes::kSample64> (data, [this] (auto& data) {
-				auto& mVerb = std::get<DoubleMVerb> (verb);
-				std::for_each (params.begin (), params.end (), [&] (auto& p) {
-					p.advance (data.numSamples,
-					           [&] (auto value) { mVerb.setParameter (p.getParamID (), value); });
-				});
-				mVerb.process (data.inputs[0].channelBuffers64, data.outputs[0].channelBuffers64,
-				               data.numSamples);
-			});
+			if (auto queue = data.inputParameterChanges->getParameterData (index))
+				params[queue->getParameterId ()].beginChanges (queue);
 		}
 	}
+
+	if (data.numSamples == 0)
+	{
+		std::for_each (params.begin (), params.end (), [] (auto& p) { p.flushChanges (); });
+	}
+	else if (data.symbolicSampleSize == Vst::SymbolicSampleSizes::kSample32)
+		processT<FloatMVerb, Vst::SymbolicSampleSizes::kSample32> (data);
+	else
+		processT<DoubleMVerb, Vst::SymbolicSampleSizes::kSample64> (data);
 
 	std::for_each (params.begin (), params.end (), [] (auto& p) { p.endChanges (); });
 
 	return kResultOk;
+}
+
+//------------------------------------------------------------------------
+template<typename T>
+void Processor::setupProcessingT (Steinberg::Vst::ProcessSetup& newSetup)
+{
+	verb = std::make_unique<T> ();
+	std::for_each (params.begin (), params.end (), [&] (auto& p) {
+		std::get<std::unique_ptr<T>> (verb)->setParameter (p.getParamID (), p.getValue ());
+	});
+	std::get<std::unique_ptr<T>> (verb)->setSampleRate (newSetup.sampleRate);
 }
 
 //------------------------------------------------------------------------
@@ -171,19 +177,11 @@ tresult PLUGIN_API Processor::setupProcessing (Vst::ProcessSetup& newSetup)
 	//--- called before any processing ----
 	if (newSetup.symbolicSampleSize == Vst::SymbolicSampleSizes::kSample32)
 	{
-		verb = FloatMVerb ();
-		std::for_each (params.begin (), params.end (), [&] (auto& p) {
-			std::get<FloatMVerb> (verb).setParameter (p.getParamID (), p.getValue ());
-		});
-		std::get<FloatMVerb> (verb).setSampleRate (newSetup.sampleRate);
+		setupProcessingT<FloatMVerb> (newSetup);
 	}
 	else
 	{
-		verb = DoubleMVerb ();
-		std::for_each (params.begin (), params.end (), [&] (auto& p) {
-			std::get<DoubleMVerb> (verb).setParameter (p.getParamID (), p.getValue ());
-		});
-		std::get<DoubleMVerb> (verb).setSampleRate (newSetup.sampleRate);
+		setupProcessingT<DoubleMVerb> (newSetup);
 	}
 
 	return AudioEffect::setupProcessing (newSetup);
@@ -215,19 +213,40 @@ tresult PLUGIN_API Processor::setBusArrangements (Vst::SpeakerArrangement* input
 //------------------------------------------------------------------------
 tresult PLUGIN_API Processor::setState (IBStream* state)
 {
-	// called when we load a preset, the model has to be reloaded
-	IBStreamer streamer (state, kLittleEndian);
-	
-	return kResultOk;
+	if (!state)
+		return kInvalidArgument;
+
+	if (auto stateData = VST3::tryVst2StateLoad (*state, {'emVB'}))
+	{
+		if (stateData->programs.empty ())
+			return kResultFalse;
+		auto data = std::make_unique<StateData> ();
+		if (stateData->programs[0].values.size() != data->size())
+			return kResultFalse;
+		for (auto idx = 0; idx < data->size (); ++idx)
+			data->at (idx) = stateData->programs[0].values[idx];
+		stateTransfer.transferObject_ui (std::move (data));
+		return kResultTrue;
+	}
+	return kResultFalse;
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API Processor::getState (IBStream* state)
 {
-	// here we need to save the model
-	IBStreamer streamer (state, kLittleEndian);
+	if (!state)
+		return kInvalidArgument;
 
-	return kResultOk;
+	VST3::Vst2xState data;
+	data.programs.resize (1);
+	for (auto idx = 0; idx <= FloatMVerb::NUM_PARAMS; ++idx)
+		data.programs[0].values.push_back (params[idx].getValue ());
+	data.programs[0].fxUniqueID = 'emVB';
+	data.fxUniqueID = 'emVB';
+	data.isBypassed = params.back ().getValue () > 0.5;
+	if (VST3::writeVst2State (data, *state))
+		return kResultTrue;
+	return kResultFalse;
 }
 
 //------------------------------------------------------------------------

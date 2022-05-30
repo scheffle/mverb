@@ -26,6 +26,7 @@ smtg_add_vst3plugin(MVerb
     source/vst3/controller.h
     source/vst3/controller.cpp
     source/vst3/entry.cpp
+    source/vst3/shared.h
     source/MVerb.h
 )
 

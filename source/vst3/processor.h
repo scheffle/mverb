@@ -18,11 +18,11 @@
 
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "public.sdk/source/vst/utility/sampleaccurate.h"
-#include <cmath>
-#include <array>
+#include "public.sdk/source/vst/utility/rttransfer.h"
+#include "shared.h"
 #include <variant>
+#include <memory>
 
-#include "../MVerb.h"
 
 namespace mverb {
 
@@ -72,12 +72,19 @@ public:
 
 //------------------------------------------------------------------------
 protected:
+	template<typename T>
+	void setupProcessingT (Steinberg::Vst::ProcessSetup& newSetup);
+
+	template<typename T, Steinberg::Vst::SymbolicSampleSizes SampleSize>
+	void processT (Steinberg::Vst::ProcessData& data);
+	
 	using Parameter = Steinberg::Vst::SampleAccurate::Parameter;
-	using DoubleMVerb = MVerb<double>;
-	using FloatMVerb = MVerb<float>;
 
 	std::array<Parameter, FloatMVerb::NUM_PARAMS + 1> params;
-	std::variant<FloatMVerb, DoubleMVerb> verb;
+	std::variant<std::unique_ptr<FloatMVerb>, std::unique_ptr<DoubleMVerb>> verb;
+
+	using StateData = std::array<double, FloatMVerb::NUM_PARAMS + 1>;
+	Steinberg::Vst::RTTransferT<StateData> stateTransfer;
 };
 
 //------------------------------------------------------------------------
