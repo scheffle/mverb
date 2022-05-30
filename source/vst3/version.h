@@ -1,4 +1,4 @@
-//	Copyright (c) 2022 Arne Scheffler
+//  Copyright (c) 2022 Arne Scheffler
 //  This code is distributed under the terms of the GNU General Public License
 
 //  MVerb is free software: you can redistribute it and/or modify
