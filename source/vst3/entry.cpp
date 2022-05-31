@@ -34,7 +34,7 @@ using namespace mverb;
 // GetPluginFactory function!
 //------------------------------------------------------------------------
 
-BEGIN_FACTORY_DEF ("", 
+BEGIN_FACTORY_DEF ("Martin Eastwood", 
 			       "", 
 			       "mailto:", 2)
 

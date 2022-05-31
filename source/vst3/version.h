@@ -27,6 +27,6 @@
 #else
 #define stringFileDescription	"MVerb VST3"
 #endif
-#define stringCompanyName		"\0"
+#define stringCompanyName		"Martin Eastwood\0"
 #define stringLegalCopyright	"Copyright(c) 2022"
 #define stringLegalTrademarks	"VST is a trademark of Steinberg Media Technologies GmbH"

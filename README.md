@@ -1,6 +1,6 @@
-﻿#mverb VST3 version
+﻿# MVerb VST3 version
 
-This is a port of the mverb plug-in to VST3. 
+This is a port of the MVerb plug-in to VST3. 
 On the contrary to the original this port also supports processing with double precision.
 
 ## How to build
@@ -20,7 +20,15 @@ cmake -Dvst3sdk_SOURCE_DIR=$PATH_TO_THE_VST3_SDK ../
 cmake --build .
 ```
 
-About mverb
+### Preset Installation
+
+Copy the included vstpresets in the presets subfolder into the following folder. Create missing folders if necessary:
+
+On macOS : ```/Library/Audio/Presets/Martin Eastwood/MVerb/```
+On Windows: ```C:\ProgramData\VST3 Presets\Martin Eastwood\MVerb\```
+On Linux : ```/usr/local/share/vst3/presets/Martin Eastwood/MVerb/```
+
+About MVerb
 =====
 
 Studio quality, open-source reverb. Its release was intended to provide a practical demonstration of Dattorro’s figure-of-eight reverb structure and provide the open source community with a high quality reverb.
