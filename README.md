@@ -24,9 +24,9 @@ cmake --build .
 
 Copy the included vstpresets in the presets subfolder into the following folder. Create missing folders if necessary:
 
-On macOS : ```/Library/Audio/Presets/Martin Eastwood/MVerb/```
-On Windows: ```C:\ProgramData\VST3 Presets\Martin Eastwood\MVerb\```
-On Linux : ```/usr/local/share/vst3/presets/Martin Eastwood/MVerb/```
+* macOS : ```/Library/Audio/Presets/Martin Eastwood/MVerb/```
+* Windows: ```C:\ProgramData\VST3 Presets\Martin Eastwood\MVerb\```
+* Linux : ```/usr/local/share/vst3/presets/Martin Eastwood/MVerb/```
 
 About MVerb
 =====
