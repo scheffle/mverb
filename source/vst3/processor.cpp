@@ -132,7 +132,7 @@ void Processor::processT (Vst::ProcessData& data)
 		else
 		{
 			Vst::ProcessDataSlicer slicer (8);
-			slicer.process<Vst::SymbolicSampleSizes::kSample32> (data, [&] (auto& data) {
+			slicer.process<SampleSize> (data, [&] (auto& data) {
 				std::for_each (params.begin (), params.end (), [&] (auto& p) {
 					p.advance (data.numSamples,
 							   [&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
