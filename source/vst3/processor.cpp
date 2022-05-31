@@ -113,7 +113,7 @@ void Processor::processT (Vst::ProcessData& data)
 	}
 	else
 	{
-		bool doBypass = params.back ().flushChanges () > 0.5;
+		bool doBypass = params[BypassParamID].flushChanges () > 0.5;
 		if (doBypass)
 		{
 			if (data.numSamples > 0)
@@ -247,11 +247,11 @@ tresult PLUGIN_API Processor::getState (IBStream* state)
 
 	VST3::Vst2xState data;
 	data.programs.resize (1);
-	for (auto idx = 0; idx <= FloatMVerb::NUM_PARAMS; ++idx)
+	for (auto idx = 0; idx <= BypassParamID; ++idx)
 		data.programs[0].values.push_back (params[idx].getValue ());
 	data.programs[0].fxUniqueID = 'emVB';
 	data.fxUniqueID = 'emVB';
-	data.isBypassed = params.back ().getValue () > 0.5;
+	data.isBypassed = params[BypassParamID].getValue () > 0.5;
 	if (VST3::writeVst2State (data, *state))
 		return kResultTrue;
 	return kResultFalse;

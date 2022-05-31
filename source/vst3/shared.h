@@ -27,5 +27,7 @@ namespace mverb {
 using DoubleMVerb = MVerb<double>;
 using FloatMVerb = MVerb<float>;
 
+static constexpr int BypassParamID = FloatMVerb::NUM_PARAMS;
+
 //------------------------------------------------------------------------
 } // namespace mverb

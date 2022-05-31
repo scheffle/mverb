@@ -50,7 +50,7 @@ tresult PLUGIN_API Controller::initialize (FUnknown* context)
 
 	parameters.addParameter (STR ("Bypass"), nullptr, 1, 0.,
 	                         Vst::ParameterInfo::kCanAutomate | Vst::ParameterInfo::kIsBypass,
-	                         FloatMVerb::NUM_PARAMS);
+	                         BypassParamID);
 
 	
 	return result;
