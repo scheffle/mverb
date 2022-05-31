@@ -118,28 +118,4 @@ IPlugView* PLUGIN_API Controller::createView (FIDString name)
 }
 
 //------------------------------------------------------------------------
-tresult PLUGIN_API Controller::setParamNormalized (Vst::ParamID tag, Vst::ParamValue value)
-{
-	// called by host to update your parameters
-	tresult result = EditControllerEx1::setParamNormalized (tag, value);
-	return result;
-}
-
-//------------------------------------------------------------------------
-tresult PLUGIN_API Controller::getParamStringByValue (Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string)
-{
-	// called by host to get a string for given normalized value of a specific parameter
-	// (without having to set the value!)
-	return EditControllerEx1::getParamStringByValue (tag, valueNormalized, string);
-}
-
-//------------------------------------------------------------------------
-tresult PLUGIN_API Controller::getParamValueByString (Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized)
-{
-	// called by host to get a normalized value from a string representation of a specific parameter
-	// (without having to set the value!)
-	return EditControllerEx1::getParamValueByString (tag, string, valueNormalized);
-}
-
-//------------------------------------------------------------------------
 } // namespace mverb
