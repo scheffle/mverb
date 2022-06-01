@@ -78,7 +78,8 @@ public:
         //nowt to do here
     }
 
-    void process(T **inputs, T **outputs, int sampleFrames){
+    bool process(T **inputs, T **outputs, int sampleFrames){
+		T silenceCheckSum = 0.;
         T OneOverSampleFrames = 1. / sampleFrames;
         T MixDelta	= (Mix - MixSmooth) * OneOverSampleFrames;
         T EarlyLateDelta = (EarlyMix - EarlyLateSmooth) * OneOverSampleFrames;
@@ -171,7 +172,9 @@ public:
             right = ( right + MixSmooth * ( accumulatorR - right ) ) * Gain;
             outputs[0][i] = left;
             outputs[1][i] = right;
+            silenceCheckSum += std::abs (left) + std::abs (right);
         }
+        return silenceCheckSum <= 1e-8;
     }
 
     void reset(){

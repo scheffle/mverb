@@ -85,6 +85,8 @@ protected:
 
 	using StateData = std::array<double, FloatMVerb::NUM_PARAMS + 1>;
 	Steinberg::Vst::RTTransferT<StateData> stateTransfer;
+
+	bool lastBlockWasSilent {false};
 };
 
 //------------------------------------------------------------------------

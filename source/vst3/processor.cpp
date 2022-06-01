@@ -88,6 +88,7 @@ tresult PLUGIN_API Processor::terminate ()
 tresult PLUGIN_API Processor::setActive (TBool state)
 {
 	//--- called when the Plug-in is enable/disable (On/Off) -----
+	lastBlockWasSilent = false;
 	return AudioEffect::setActive (state);
 }
 
@@ -113,8 +114,9 @@ void Processor::processT (Vst::ProcessData& data)
 	}
 	else
 	{
+		bool inputSilent = data.inputs[0].silenceFlags != 0;
 		bool doBypass = params[BypassParamID].flushChanges () > 0.5;
-		if (doBypass)
+		if (doBypass || (lastBlockWasSilent && inputSilent))
 		{
 			if (data.numSamples > 0)
 			{
@@ -131,16 +133,21 @@ void Processor::processT (Vst::ProcessData& data)
 		}
 		else
 		{
+			bool blockSilent = false;
 			Vst::ProcessDataSlicer slicer (8);
 			slicer.process<SampleSize> (data, [&] (auto& data) {
 				std::for_each (params.begin (), params.end (), [&] (auto& p) {
 					p.advance (data.numSamples,
 							   [&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
 				});
-				mVerb->process (Vst::getChannelBuffers<SampleSize> (data.inputs[0]),
+				blockSilent |= mVerb->process (Vst::getChannelBuffers<SampleSize> (data.inputs[0]),
 							   Vst::getChannelBuffers<SampleSize> (data.outputs[0]), data.numSamples);
 			});
-			// TODO: Support Silence Flags
+			lastBlockWasSilent = blockSilent;
+			if (blockSilent)
+			{
+				data.outputs[0].silenceFlags = ((uint64)1 << 2) - 1;
+			}
 		}
 	}
 }
