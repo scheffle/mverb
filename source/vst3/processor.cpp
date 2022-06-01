@@ -118,18 +118,18 @@ void Processor::processT (Vst::ProcessData& data)
 		bool doBypass = params[BypassParamID].flushChanges () > 0.5;
 		if (doBypass || (lastBlockWasSilent && inputSilent))
 		{
-			if (data.numSamples > 0)
+			std::for_each (params.begin (), params.end (), [&] (auto& p) {
+				p.flushChanges ([&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
+			});
+			for (auto channel = 0; channel < 2; ++channel)
 			{
-				for (auto channel = 0; channel < 2; ++channel)
-				{
-					if (Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel] !=
-						Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel])
-						memcpy (Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel],
-								Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel],
-								data.numSamples * sizeof (float));
-				}
-				data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
+				if (Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel] !=
+				    Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel])
+					memcpy (Vst::getChannelBuffers<SampleSize> (data.outputs[0])[channel],
+					        Vst::getChannelBuffers<SampleSize> (data.inputs[0])[channel],
+					        data.numSamples * sizeof (float));
 			}
+			data.outputs[0].silenceFlags = data.inputs[0].silenceFlags;
 		}
 		else
 		{
@@ -138,10 +138,11 @@ void Processor::processT (Vst::ProcessData& data)
 			slicer.process<SampleSize> (data, [&] (auto& data) {
 				std::for_each (params.begin (), params.end (), [&] (auto& p) {
 					p.advance (data.numSamples,
-							   [&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
+					           [&] (auto value) { mVerb->setParameter (p.getParamID (), value); });
 				});
 				blockSilent |= mVerb->process (Vst::getChannelBuffers<SampleSize> (data.inputs[0]),
-							   Vst::getChannelBuffers<SampleSize> (data.outputs[0]), data.numSamples);
+				                               Vst::getChannelBuffers<SampleSize> (data.outputs[0]),
+				                               data.numSamples);
 			});
 			lastBlockWasSilent = blockSilent;
 			if (blockSilent)

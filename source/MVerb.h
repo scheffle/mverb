@@ -168,13 +168,13 @@ public:
                             -(0.6*staticDelayLine[3].GetIndex(2));
             accumulatorL = ((accumulatorL * EarlyMix) + ((1 - EarlyMix) * earlyReflectionsL));
             accumulatorR = ((accumulatorR * EarlyMix) + ((1 - EarlyMix) * earlyReflectionsR));
-            left = ( left + MixSmooth * ( accumulatorL - left ) ) * Gain;
-            right = ( right + MixSmooth * ( accumulatorR - right ) ) * Gain;
-            outputs[0][i] = left;
-            outputs[1][i] = right;
+            left = ( left + MixSmooth * ( accumulatorL - left ) );
+            right = ( right + MixSmooth * ( accumulatorR - right ) );
             silenceCheckSum += std::abs (left) + std::abs (right);
+            outputs[0][i] = left * Gain;
+            outputs[1][i] = right * Gain;
         }
-        return silenceCheckSum <= 1e-8;
+        return silenceCheckSum <= 1e-7;
     }
 
     void reset(){
