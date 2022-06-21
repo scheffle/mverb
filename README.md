@@ -16,7 +16,7 @@ On the contrary to the original this port also supports processing with double p
 ```
 mkdir build
 cd build
-cmake -Dvst3sdk_SOURCE_DIR=$PATH_TO_THE_VST3_SDK ../
+cmake -DCMAKE_BUILD_TYPE=RELEASE -Dvst3sdk_SOURCE_DIR=$PATH_TO_THE_VST3_SDK ../
 cmake --build .
 ```
 
